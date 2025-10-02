@@ -250,6 +250,6 @@ async def health_check(rag: RAGService = Depends(get_rag_service)):
 # ----------------------
 # Run Server
 # ----------------------
-if __name__ == "__main__":
-    logging.info("Starting server on 0.0.0.0:8800")
-    uvicorn.run(app, host="0.0.0.0", port=8800)
+# if __name__ == "__main__":
+#     logging.info("Starting server on 0.0.0.0:8800")
+#     uvicorn.run(app, host="0.0.0.0", port=8800)

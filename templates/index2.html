@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RAG Chat Assistant</title>
+  <title>Virtual Yash Voice Bot</title>
   <style>
     :root {
       --bg: #0f1724;
@@ -313,7 +313,7 @@
 
   <script>
     // Configuration
-    const API_BASE_URL = 'http://localhost:8800'; // Change to your FastAPI server URL
+    const API_BASE_URL = 'https://voicebot-yash.onrender.com'; // Change to your FastAPI server URL
 
     // DOM Elements
     const messagesEl = document.getElementById('messages');
@@ -534,7 +534,7 @@
       console.warn('Speech recognition not available in this browser');
     }
 
-    appendMessage('Hello! Ask me anything about the document.', 'bot', false);
+    appendMessage('Hello! How can I assist you today?', 'bot', false);
 
     // Load voices for TTS
     if ('speechSynthesis' in window) {
