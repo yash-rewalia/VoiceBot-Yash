@@ -110,7 +110,16 @@ class RAGService:
 
                 # Use a proper prompt for RAG
                 rag_prompt = PromptTemplate(
-                    template="Use the following context to answer the question.\n\nContext:\n{context}\n\nQuestion: {question}\nAnswer:",
+                    template="""
+                    You are a knowledgeable assistant. Begin your response with a warm greeting. Use the provided context to answer the user’s question, but explain it in a natural, conversational way rather than just restating the context. Make sure the reply feels human-like and approachable. At the end of your response, include an open-ended question to keep the conversation flowing
+                    For general greeting reply in short only.
+
+                    Input:
+                    Context: {context}
+                    Question: {question}
+
+                    Output:
+                    """,
                     input_variables=["context", "question"]
                 )
 
@@ -131,7 +140,20 @@ class RAGService:
         # ---------------------
         try:
             prompt = PromptTemplate(
-                template="Answer the question concisely: {question}",
+                template="""You are a knowledgeable assistant.
+
+                    - If the user sends a general greeting (e.g., “hi”, “hello”, “hey”), reply briefly with a warm, friendly greeting only. Do not pull from context in this case.
+                    - If the user asks a question:
+                        - Begin with a warm greeting.
+                        - Use the provided context to answer naturally and conversationally (do not just restate context).
+                        - Ensure the tone feels approachable and human-like.
+                        - End with an open-ended question to keep the conversation flowing.
+
+                    Input:
+                    Question: {question}
+
+                    Output:
+                    """,
                 input_variables=["question"]
             )
             self.general_llm_chain = LLMChain(llm=self.llm, prompt=prompt)
@@ -146,6 +168,22 @@ class RAGService:
     def answer(self, question: str) -> str:
         if not question.strip():
             return "Question is empty."
+
+        # Detect greetings
+        greetings = {"hi", "hello", "hey", "good morning", "good afternoon", "good evening"}
+        normalized = question.strip().lower()
+        if any(normalized == g or normalized.startswith(g + " ") for g in greetings):
+            logging.info("Detected greeting, using general LLM chain only.")
+            if self.general_llm_chain:
+                try:
+                    llm_answer = self.general_llm_chain.run(question)
+                    logging.info(f"LLM greeting answer: {llm_answer}")
+                    return llm_answer
+                except Exception as e:
+                    logging.error(f"General LLM chain failed: {e}")
+                    return "Sorry, I could not answer that."
+            else:
+                return "LLM chain not initialized."
 
         # 1️⃣ Try RAG first
         rag_answer = None
