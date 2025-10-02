@@ -334,7 +334,7 @@
       const rec = new SpeechRecognition();
       rec.lang = 'en-US';
       rec.interimResults = true;
-      rec.continuous = false;
+      rec.continuous = true;
 
       rec.onstart = () => {
         recognizing = true;
