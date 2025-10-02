@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -11,17 +12,18 @@
       --accent: #5eead4;
       --muted: #94a3b8;
       --user: #60a5fa;
-      --glass: rgba(255,255,255,0.03);
+      --glass: rgba(255, 255, 255, 0.03);
     }
-    
-    html, body {
+
+    html,
+    body {
       height: 100%;
       margin: 0;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
       background: linear-gradient(180deg, #071028 0%, var(--bg) 100%);
       color: #e6eef6;
     }
-    
+
     .app {
       display: grid;
       grid-template-rows: auto 1fr auto;
@@ -30,7 +32,7 @@
       padding: 18px;
       box-sizing: border-box;
     }
-    
+
     .card {
       background: linear-gradient(180deg, rgba(187, 104, 104, 0.02), rgba(177, 173, 173, 0.01));
       border-radius: 12px;
@@ -39,28 +41,28 @@
       display: flex;
       flex-direction: column;
     }
-    
+
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 16px 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     }
-    
+
     header h1 {
       font-size: 18px;
       margin: 0;
     }
-    
+
     header p {
       margin: 4px 0 0 0;
       color: var(--muted);
       font-size: 13px;
     }
-    
 
-    
+
+
     main {
       display: flex;
       flex-direction: column;
@@ -68,7 +70,7 @@
       min-height: 0;
       padding: 16px;
     }
-    
+
     .messages {
       flex: 1;
       overflow-y: auto;
@@ -78,7 +80,7 @@
       gap: 12px;
       background: transparent;
     }
-    
+
     .message {
       max-width: 75%;
       padding: 12px 16px;
@@ -86,37 +88,44 @@
       line-height: 1.5;
       animation: fadeIn 0.3s ease;
     }
-    
+
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
-    
+
     .message.user {
       align-self: flex-end;
-      background: linear-gradient(90deg, rgba(96,165,250,0.12), rgba(96,165,250,0.08));
-      border: 1px solid rgba(96,165,250,0.12);
+      background: linear-gradient(90deg, rgba(96, 165, 250, 0.12), rgba(96, 165, 250, 0.08));
+      border: 1px solid rgba(96, 165, 250, 0.12);
       color: #dbeafe;
     }
-    
+
     .message.bot {
       align-self: flex-start;
       background: var(--glass);
-      border: 1px solid rgba(255,255,255,0.02);
+      border: 1px solid rgba(255, 255, 255, 0.02);
       color: #e6eef6;
     }
-    
+
     .message.user .actions {
       display: flex;
       gap: 8px;
       margin-top: 8px;
       padding-top: 8px;
-      border-top: 1px solid rgba(255,255,255,0.05);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
     }
-    
+
     .message.user .tts-btn {
       background: transparent;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       padding: 6px 12px;
       border-radius: 6px;
       cursor: pointer;
@@ -126,22 +135,22 @@
       align-items: center;
       gap: 4px;
     }
-    
+
     .message.user .tts-btn:hover {
-      background: rgba(255,255,255,0.05);
+      background: rgba(255, 255, 255, 0.05);
     }
-    
+
     .message.bot .actions {
       display: flex;
       gap: 8px;
       margin-top: 8px;
       padding-top: 8px;
-      border-top: 1px solid rgba(255,255,255,0.05);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
     }
-    
+
     .message.bot .tts-btn {
       background: transparent;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       padding: 6px 12px;
       border-radius: 6px;
       cursor: pointer;
@@ -151,17 +160,17 @@
       align-items: center;
       gap: 4px;
     }
-    
+
     .message.bot .tts-btn:hover {
-      background: rgba(255,255,255,0.05);
+      background: rgba(255, 255, 255, 0.05);
     }
-    
+
     .loading {
       display: flex;
       gap: 4px;
       padding: 12px 16px;
     }
-    
+
     .loading span {
       width: 8px;
       height: 8px;
@@ -169,47 +178,60 @@
       background: var(--accent);
       animation: bounce 1.4s infinite ease-in-out both;
     }
-    
-    .loading span:nth-child(1) { animation-delay: -0.32s; }
-    .loading span:nth-child(2) { animation-delay: -0.16s; }
-    
-    @keyframes bounce {
-      0%, 80%, 100% { transform: scale(0); }
-      40% { transform: scale(1); }
+
+    .loading span:nth-child(1) {
+      animation-delay: -0.32s;
     }
-    
+
+    .loading span:nth-child(2) {
+      animation-delay: -0.16s;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      80%,
+      100% {
+        transform: scale(0);
+      }
+
+      40% {
+        transform: scale(1);
+      }
+    }
+
     .controls {
       display: flex;
       gap: 8px;
       padding: 16px;
-      border-top: 1px solid rgba(255,255,255,0.02);
+      border-top: 1px solid rgba(255, 255, 255, 0.02);
       align-items: center;
     }
-    
+
     .input-wrap {
       display: flex;
       gap: 8px;
       flex: 1;
     }
-    
+
     input[type="text"] {
       flex: 1;
       padding: 12px 16px;
       border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.04);
+      border: 1px solid rgba(255, 255, 255, 0.04);
       background: transparent;
       color: inherit;
       font-size: 14px;
     }
-    
+
     input[type="text"]:focus {
       outline: none;
       border-color: var(--accent);
     }
-    
+
     .btn {
       background: transparent;
-      border: 1px solid rgba(255,255,255,0.06);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       padding: 12px 16px;
       border-radius: 10px;
       cursor: pointer;
@@ -217,44 +239,50 @@
       color: #e6eef6;
       transition: all 0.2s;
     }
-    
+
     .btn:hover {
-      background: rgba(255,255,255,0.05);
+      background: rgba(255, 255, 255, 0.05);
     }
-    
+
     .btn.primary {
       background: linear-gradient(90deg, var(--accent), #34d399);
       color: #0f1724;
       border: none;
     }
-    
+
     .btn.primary:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
-    
+
     .btn:active {
       transform: translateY(1px);
     }
-    
+
     .mic.active {
       box-shadow: 0 0 20px rgba(94, 234, 212, 0.5);
       background: rgba(94, 234, 212, 0.1);
     }
-    
+
     footer {
       text-align: center;
       color: var(--muted);
       font-size: 12px;
       padding-bottom: 8px;
     }
-    
+
     @media (max-width: 768px) {
-      .message { max-width: 90%; }
-      .controls { flex-wrap: wrap; }
+      .message {
+        max-width: 90%;
+      }
+
+      .controls {
+        flex-wrap: wrap;
+      }
     }
   </style>
 </head>
+
 <body>
   <div class="app">
     <div class="card">
@@ -270,12 +298,7 @@
 
         <div class="controls">
           <div class="input-wrap">
-            <input 
-              id="text-input" 
-              type="text" 
-              placeholder="Ask a question about your document..." 
-              autocomplete="off"
-            />
+            <input id="text-input" type="text" placeholder="Ask a question about your document..." autocomplete="off" />
             <button id="send-btn" class="btn primary">Send</button>
           </div>
           <button id="mic-btn" title="Voice input (Ctrl+M)" class="btn mic">🎤</button>
@@ -290,44 +313,44 @@
 
   <script>
     // Configuration
-    const API_BASE_URL = 'http://0.0.0.0:8800'; // Change to your FastAPI server URL
+    const API_BASE_URL = 'http://localhost:8800'; // Change to your FastAPI server URL
 
     // DOM Elements
     const messagesEl = document.getElementById('messages');
     const inputEl = document.getElementById('text-input');
     const sendBtn = document.getElementById('send-btn');
     const micBtn = document.getElementById('mic-btn');
-    
+
     // State
     let isProcessing = false;
     let recognition = null;
     let recognizing = false;
-    
+
     // Initialize Speech Recognition
     function initSpeechRecognition() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) return null;
-      
+
       const rec = new SpeechRecognition();
       rec.lang = 'en-US';
       rec.interimResults = true;
       rec.continuous = false;
-      
+
       rec.onstart = () => {
         recognizing = true;
         micBtn.classList.add('active');
       };
-      
+
       rec.onend = () => {
         recognizing = false;
         micBtn.classList.remove('active');
       };
-      
+
       rec.onerror = (e) => {
         console.error('Speech recognition error:', e.error);
         recognizing = false;
         micBtn.classList.remove('active');
-        
+
         // Handle specific errors
         if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
           alert('Microphone access denied. Please allow microphone permissions in your browser settings.');
@@ -337,7 +360,7 @@
           alert('Network error. Please check your internet connection.');
         }
       };
-      
+
       rec.onresult = (event) => {
         let transcript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -349,45 +372,45 @@
           inputEl.value = transcript;
         }
       };
-      
+
       return rec;
     }
-    
+
     // Text-to-Speech
     function playTTS(text) {
       if (!('speechSynthesis' in window)) {
         alert('Text-to-speech not supported in this browser');
         return;
       }
-      
+
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
-      
+
       const voices = window.speechSynthesis.getVoices();
       if (voices && voices.length) {
         const voice = voices.find(v => v.lang && v.lang.startsWith('en')) || voices[0];
         if (voice) utterance.voice = voice;
       }
-      
+
       window.speechSynthesis.speak(utterance);
     }
-    
+
     // UI Functions
     function appendMessage(text, role = 'bot', showTTS = true) {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `message ${role}`;
-    
-    const textDiv = document.createElement('div');
-    textDiv.textContent = text;
-    msgDiv.appendChild(textDiv);
-    
-    if (showTTS) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${role}`;
+
+      const textDiv = document.createElement('div');
+      textDiv.textContent = text;
+      msgDiv.appendChild(textDiv);
+
+      if (showTTS) {
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'actions';
-        
+
         // Listen button
         const ttsBtn = document.createElement('button');
         ttsBtn.className = 'tts-btn';
@@ -400,20 +423,20 @@
         stopBtn.className = 'stop-btn';
         stopBtn.innerHTML = '⏹ Stop';
         stopBtn.onclick = () => {
-        if (window.speechSynthesis.speaking) {
+          if (window.speechSynthesis.speaking) {
             window.speechSynthesis.cancel(); // stops TTS immediately
             console.log('TTS playback stopped.');
-        }
+          }
         };
         actionsDiv.appendChild(stopBtn);
 
         msgDiv.appendChild(actionsDiv);
+      }
+
+      messagesEl.appendChild(msgDiv);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      return msgDiv;
     }
-    
-    messagesEl.appendChild(msgDiv);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-    return msgDiv;
-}
 
     function showLoading() {
       const loadingDiv = document.createElement('div');
@@ -423,24 +446,24 @@
       messagesEl.appendChild(loadingDiv);
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
-    
+
     function hideLoading() {
       const loading = document.getElementById('loading-indicator');
       if (loading) loading.remove();
     }
-    
+
     // API Functions
     async function sendMessage(text) {
       if (!text.trim() || isProcessing) return;
-      
+
       const userMessage = text.trim();
       appendMessage(userMessage, 'user');
       inputEl.value = '';
-      
+
       isProcessing = true;
       sendBtn.disabled = true;
       showLoading();
-      
+
       try {
         const response = await fetch(`${API_BASE_URL}/chat`, {
           method: 'POST',
@@ -449,16 +472,16 @@
           },
           body: JSON.stringify({ question: userMessage })
         });
-        
+
         hideLoading();
-        
+
         if (!response.ok) {
           throw new Error('Chat request failed');
         }
-        
+
         const data = await response.json();
         const botResponse = data.answer || data.response || 'No response received';
-        
+
         appendMessage(botResponse, 'bot', true);
       } catch (error) {
         hideLoading();
@@ -469,32 +492,32 @@
         sendBtn.disabled = false;
       }
     }
-    
+
     // Event Listeners
     sendBtn.addEventListener('click', () => {
       sendMessage(inputEl.value);
     });
-    
+
     inputEl.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage(inputEl.value);
       }
     });
-    
+
     micBtn.addEventListener('click', () => {
       if (!recognition) {
         alert('Speech recognition not available. Please use desktop Chrome or Edge.');
         return;
       }
-      
+
       if (recognizing) {
         recognition.stop();
       } else {
         recognition.start();
       }
     });
-    
+
     // Keyboard shortcuts
     window.addEventListener('keydown', (e) => {
       if (e.ctrlKey && e.key.toLowerCase() === 'm') {
@@ -502,21 +525,22 @@
         micBtn.click();
       }
     });
-    
+
     // Initialize
     recognition = initSpeechRecognition();
-    
+
     if (!recognition) {
       micBtn.style.display = 'none';
       console.warn('Speech recognition not available in this browser');
     }
-    
+
     appendMessage('Hello! Ask me anything about the document.', 'bot', false);
-    
+
     // Load voices for TTS
     if ('speechSynthesis' in window) {
       window.speechSynthesis.getVoices();
     }
   </script>
 </body>
+
 </html>

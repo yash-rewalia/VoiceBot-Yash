@@ -1,32 +1,50 @@
-from fastapi import FastAPI, HTTPException, Request
+import os
+import logging
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+from dotenv import load_dotenv
 import uvicorn
+
 from langchain_mistralai import ChatMistralAI, MistralAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.chains import RetrievalQA
-from langchain.docstore.document import Document
+from langchain.chains import RetrievalQA, LLMChain
 from langchain_community.document_loaders import PyPDFLoader
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
-import os
-from dotenv import load_dotenv
-load_dotenv() 
+from langchain.prompts import PromptTemplate
+
+# ----------------------
+# Configuration
+# ----------------------
+load_dotenv()
+PDF_PATH = "about me.pdf"
+FAISS_INDEX_PATH = "faiss_index"
+TEMPLATES_DIR = "templates"
+LLM_MODEL = "mistral-small-latest"
+EMBED_MODEL = "mistral-embed"
+
+# ----------------------
+# Logging Setup
+# ----------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+)
 
 # ----------------------
 # FastAPI Setup
 # ----------------------
-app = FastAPI(title="Virtual Yash")
-
-# Enable CORS
+app = FastAPI(title="RAG + LLM Chat Assistant")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend URL
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 # ----------------------
 # Request/Response Models
@@ -38,125 +56,162 @@ class ChatResponse(BaseModel):
     answer: str
 
 # ----------------------
-# LangChain RAG Setup
+# RAG + LLM Service
 # ----------------------
-# Global variables for RAG components
-vectorstore = None
-qa_chain = None
+class RAGService:
+    def __init__(self, pdf_path: str, faiss_path: str):
+        self.pdf_path = pdf_path
+        self.faiss_path = faiss_path
+        self.embeddings = MistralAIEmbeddings(model=EMBED_MODEL)
+        self.llm = ChatMistralAI(temperature=0.4, model=LLM_MODEL)
 
-def initialize_rag_from_pdf(pdf_path: str):
-    """Initialize RAG system from a PDF file"""
-    global vectorstore, qa_chain, llm_fallback
-    
-    try:
-        # Load PDF
-        loader = PyPDFLoader(pdf_path)
-        pages = loader.load()
-        
-        # Split documents
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=500,
-            chunk_overlap=50
-        )
-        docs = splitter.split_documents(pages)
-        
-        # Create embeddings and FAISS store
-        embeddings = MistralAIEmbeddings(model="mistral-embed")
-        vectorstore = FAISS.from_documents(docs, embeddings)
-        
-        # Build RAG pipeline
-        retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
-        qa_chain = RetrievalQA.from_chain_type(
-            llm=ChatMistralAI(temperature=0.4, model="mistral-small-latest"),
-            retriever=retriever,
-            return_source_documents=True,
-            chain_type="stuff"
-        )
-        
-        # Fallback LLM (direct generation without retrieval)
-        llm_fallback = ChatMistralAI(temperature=0.4, model="mistral-small-latest")
+        # Chains
+        self.vectorstore = None
+        self.rag_chain = None
+        self.general_llm_chain = None
 
-        print(f"RAG system initialized successfully from {pdf_path}")
-        print(f"Loaded {len(pages)} pages, created {len(docs)} chunks")
-        
-    except Exception as e:
-        print(f"Error initializing RAG: {str(e)}")
-        raise
+        self._initialize()
 
-def query_rag_or_llm(question: str):
-    """
-    Query RAG system first. If no relevant documents found, fallback to direct LLM generation.
-    Returns a dictionary with 'answer' and optionally 'source_documents'.
-    """
-    global qa_chain, vectorstore, llm_fallback
-    
-    # Search relevant docs
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
-    relevant_docs = retriever.get_relevant_documents(question)
-    
-    if relevant_docs and len(relevant_docs) > 0:
-        # Use RAG pipeline
-        result = qa_chain.run(question)
-        return {"answer": result, "source_documents": relevant_docs}
-    else:
-        # Fallback to direct LLM generation
-        answer = llm_fallback.invoke(question)
-        return {"answer": answer, "source_documents": []}
+    def _initialize(self):
+        # ---------------------
+        # RAG Chain Initialization
+        # ---------------------
+        if os.path.exists(self.faiss_path):
+            logging.info("FAISS index found. Loading vectorstore from disk.")
+            try:
+                self.vectorstore = FAISS.load_local(
+                    self.faiss_path,
+                    self.embeddings,
+                    allow_dangerous_deserialization=True
+                )
+            except Exception as e:
+                logging.error(f"Failed to load FAISS index: {e}")
+                self.vectorstore = None
+        elif os.path.exists(self.pdf_path):
+            logging.info(f"FAISS index not found. Creating new vectorstore from PDF: {self.pdf_path}")
+            try:
+                loader = PyPDFLoader(self.pdf_path)
+                pages = loader.load()
+                splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+                docs = splitter.split_documents(pages)
+                self.vectorstore = FAISS.from_documents(docs, self.embeddings)
+                self.vectorstore.save_local(self.faiss_path)
+                logging.info(f"Vectorstore created and saved to {self.faiss_path}")
+            except Exception as e:
+                logging.error(f"Failed to create vectorstore from PDF: {e}")
+                self.vectorstore = None
+        else:
+            logging.warning(f"PDF not found at {self.pdf_path}. RAG chain not initialized.")
+            self.vectorstore = None
 
+        if self.vectorstore:
+            try:
+                retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
+
+                # Use a proper prompt for RAG
+                rag_prompt = PromptTemplate(
+                    template="Use the following context to answer the question.\n\nContext:\n{context}\n\nQuestion: {question}\nAnswer:",
+                    input_variables=["context", "question"]
+                )
+
+                self.rag_chain = RetrievalQA.from_chain_type(
+                    llm=self.llm,
+                    retriever=retriever,
+                    return_source_documents=False,  # important: return string, not dict
+                    chain_type="stuff",
+                    chain_type_kwargs={"prompt": rag_prompt}
+                )
+                logging.info("RAG chain initialized successfully.")
+            except Exception as e:
+                logging.error(f"Failed to initialize RAG chain: {e}")
+                self.rag_chain = None
+
+        # ---------------------
+        # General LLM Chain Initialization
+        # ---------------------
+        try:
+            prompt = PromptTemplate(
+                template="Answer the question concisely: {question}",
+                input_variables=["question"]
+            )
+            self.general_llm_chain = LLMChain(llm=self.llm, prompt=prompt)
+            logging.info("General LLM chain initialized successfully.")
+        except Exception as e:
+            logging.error(f"Failed to initialize general LLM chain: {e}")
+            self.general_llm_chain = None
+
+    # ---------------------
+    # Answering Logic
+    # ---------------------
+    def answer(self, question: str) -> str:
+        if not question.strip():
+            return "Question is empty."
+
+        # 1️⃣ Try RAG first
+        rag_answer = None
+        if self.rag_chain:
+            try:
+                rag_answer = self.rag_chain.run(question)
+                rag_answer = rag_answer.strip() if rag_answer else None
+                logging.info(f"RAG answer: {rag_answer}")
+            except Exception as e:
+                logging.error(f"RAG chain failed: {e}")
+                rag_answer = None
+
+        # 2️⃣ Fallback only if RAG failed
+        if not rag_answer:
+            logging.info("Fallback to general LLM chain.")
+            if self.general_llm_chain:
+                try:
+                    llm_answer = self.general_llm_chain.run(question)
+                    logging.info(f"LLM fallback answer: {llm_answer}")
+                    return llm_answer
+                except Exception as e:
+                    logging.error(f"General LLM chain failed: {e}")
+                    return "Sorry, I could not answer that."
+            else:
+                return "LLM chain not initialized."
+
+        return rag_answer
+
+# ----------------------
+# Singleton Dependency
+# ----------------------
+rag_service = RAGService(PDF_PATH, FAISS_INDEX_PATH)
+
+def get_rag_service():
+    return rag_service
 
 # ----------------------
 # API Endpoints
 # ----------------------
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize RAG on startup"""
-    # Check if PDF exists, otherwise use sample text
-    pdf_path = r"C:\Users\hp\Downloads\folder\folder\about me.pdf"  # Change this to your PDF path
-    
-    if os.path.exists(pdf_path):
-        initialize_rag_from_pdf(pdf_path)
-
-
-# Jinja2 templates
-templates = Jinja2Templates(directory="templates")
-
-# Render your HTML at root endpoint
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
-    return templates.TemplateResponse("inedx2.html", {"request": request})
+    return templates.TemplateResponse("index2.html", {"request": request})
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
-    """Handle chat requests"""
-    if not qa_chain:
-        raise HTTPException(status_code=500, detail="RAG system not initialized")
-    
+async def chat(request: ChatRequest, rag: RAGService = Depends(get_rag_service)):
     if not request.question or not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
-    
     try:
-        # Run query through RAG pipeline
-        result = qa_chain.invoke({"query": request.question})
-        answer = result["result"]
-        
+        answer = rag.answer(request.question)
         return ChatResponse(answer=answer)
-    
     except Exception as e:
-        print(f"Error processing chat: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
+        logging.error(f"Error in /chat endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
-async def health_check():
-    """Detailed health check"""
+async def health_check(rag: RAGService = Depends(get_rag_service)):
     return {
         "status": "healthy",
-        "rag_initialized": qa_chain is not None,
-        "vectorstore_ready": vectorstore is not None
+        "rag_initialized": rag.rag_chain is not None,
+        "vectorstore_ready": rag.vectorstore is not None,
+        "general_llm_ready": rag.general_llm_chain is not None
     }
 
 # ----------------------
 # Run Server
 # ----------------------
 if __name__ == "__main__":
+    logging.info("Starting server on 0.0.0.0:8800")
     uvicorn.run(app, host="0.0.0.0", port=8800)
